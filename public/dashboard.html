@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin Dashboard</title>
+  <style>
+    body{font-family:system-ui;max-width:900px;margin:40px auto;padding:16px}
+    button{padding:10px 14px;border-radius:10px;border:1px solid #111;cursor:pointer}
+    .card{border:1px solid #eee;border-radius:14px;padding:14px;margin-top:10px}
+    .top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+    .danger{border-color:#b00020}
+  </style>
+</head>
+<body>
+
+  <div class="top">
+    <h2>Dashboard</h2>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button onclick="logout()" class="danger">Logout</button>
+      <button onclick="location.href='/'">صفحة التسجيل</button>
+    </div>
+  </div>
+
+  <div id="list"></div>
+
+<script>
+  const listDiv = document.getElementById("list");
+
+  function getToken(){
+    return localStorage.getItem("admin_token");
+  }
+
+  function logout(){
+    localStorage.removeItem("admin_token");
+    location.href = "/login";
+  }
+
+  async function load() {
+    const token = getToken();
+    if(!token){
+      location.href = "/login";
+      return;
+    }
+
+    const res = await fetch("/api/admin/scrims", {
+      headers: { "Authorization": "Bearer " + token }
+    });
+
+    if(res.status === 401){
+      logout();
+      return;
+    }
+
+    const data = await res.json();
+    const items = data.items || [];
+
+    listDiv.innerHTML = "";
+    if(items.length === 0){
+      listDiv.innerHTML = "<p>مفيش تسجيلات.</p>";
+      return;
+    }
+
+    items.forEach(x => {
+      const div = document.createElement("div");
+      div.className = "card";
+      div.innerHTML = `
+        <b>${x.teamName}</b>
+        <div>القائد: ${x.leaderName} — ID: ${x.leaderId}</div>
+        <div style="opacity:.75;font-size:12px">${new Date(x.createdAt).toLocaleString()}</div>
+        ${x.players && x.players.length ? `<div>اللاعبين: ${x.players.join(" / ")}</div>` : ""}
+        <div style="margin-top:10px">
+          <button class="danger" onclick="deleteScrim('${x.id}')">حذف</button>
+        </div>
+      `;
+      listDiv.appendChild(div);
+    });
+  }
+
+  async function deleteScrim(id){
+    const token = getToken();
+    const res = await fetch("/api/admin/scrims/" + id, {
+      method: "DELETE",
+      headers: { "Authorization": "Bearer " + token }
+    });
+
+    if(res.status === 401){
+      logout();
+      return;
+    }
+
+    load();
+  }
+
+  load();
+</script>
+
+</body>
+</html>

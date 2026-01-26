@@ -1,147 +1,94 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>تسجيل الاسكرِمات</title>
+  <title>Scrim Register</title>
   <style>
-    body{font-family:system-ui,Arial; max-width:980px; margin:20px auto; padding:0 12px}
-    .card{border:1px solid #ddd; border-radius:12px; padding:14px; margin-bottom:14px}
-    input,textarea,select,button{width:100%; padding:10px; margin-top:8px}
-    table{width:100%; border-collapse:collapse}
-    th,td{border-bottom:1px solid #eee; padding:10px; text-align:right}
-    .row{display:grid; grid-template-columns:1fr 1fr; gap:12px}
-    @media (max-width:720px){ .row{grid-template-columns:1fr} }
+    body{font-family:system-ui;max-width:800px;margin:40px auto;padding:16px}
+    input,textarea,button{width:100%;padding:10px;margin:6px 0;border-radius:10px;border:1px solid #ccc}
+    button{border-color:#111;cursor:pointer}
+    .card{border:1px solid #eee;border-radius:14px;padding:14px;margin-top:10px}
+    .top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+    a{color:blue;text-decoration:none}
   </style>
 </head>
 <body>
-  <h1>تسجيل الاسكرِمات (PUBG)</h1>
 
-  <div class="card">
-    <h3>سجّل اسكرِم جديد</h3>
-    <form id="scrimForm">
-      <label>اسم الاسكرِم / عنوان</label>
-      <input name="title" required placeholder="مثال: Scrim Night #12" />
-
-      <div class="row">
-        <div>
-          <label>المود</label>
-          <select name="mode" required>
-            <option value="">اختار</option>
-            <option>Squad</option>
-            <option>Duo</option>
-            <option>Solo</option>
-            <option>Custom</option>
-          </select>
-        </div>
-        <div>
-          <label>اللعبة</label>
-          <input name="game" value="PUBG" />
-        </div>
-      </div>
-
-      <div class="row">
-        <div>
-          <label>التاريخ</label>
-          <input type="date" name="date" required />
-        </div>
-        <div>
-          <label>الوقت</label>
-          <input type="time" name="time" required />
-        </div>
-      </div>
-
-      <div class="row">
-        <div>
-          <label>المنظّم</label>
-          <input name="organizer" required placeholder="اسم الشخص/التيم" />
-        </div>
-        <div>
-          <label>وسيلة تواصل</label>
-          <input name="contact" placeholder="Discord / WhatsApp / in-game" />
-        </div>
-      </div>
-
-      <label>ملاحظات</label>
-      <textarea name="notes" rows="3" placeholder="ماب/رومات/قوانين..."></textarea>
-
-      <button type="submit">تسجيل</button>
-      <p id="msg"></p>
-    </form>
+  <div class="top">
+    <h2>تسجيل الاسكريم</h2>
+    <a href="/login">دخول الأدمن</a>
   </div>
 
-  <div class="card">
-    <h3>الليستة</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>العنوان</th>
-          <th>المود</th>
-          <th>التاريخ</th>
-          <th>الوقت</th>
-          <th>المنظّم</th>
-        </tr>
-      </thead>
-      <tbody id="list"></tbody>
-    </table>
-  </div>
+  <form id="form">
+    <input id="teamName" placeholder="اسم التيم" required />
+    <input id="leaderName" placeholder="اسم القائد" required />
+    <input id="leaderId" placeholder="PUBG ID للقائد" required />
+    <textarea id="players" rows="4" placeholder="اللاعبين (اختياري) كل لاعب في سطر"></textarea>
+    <button type="submit">تسجيل</button>
+  </form>
+
+  <h3>الليستة</h3>
+  <div id="list"></div>
 
 <script>
-  const form = document.getElementById("scrimForm");
-  const msg = document.getElementById("msg");
-  const list = document.getElementById("list");
+  const listDiv = document.getElementById("list");
 
-  async function loadScrims(){
+  async function loadScrims() {
     const res = await fetch("/api/scrims");
     const data = await res.json();
-    list.innerHTML = data.map(s => `
-      <tr>
-        <td>${s.id}</td>
-        <td>${escapeHtml(s.title)}</td>
-        <td>${escapeHtml(s.mode)}</td>
-        <td>${escapeHtml(s.date)}</td>
-        <td>${escapeHtml(s.time)}</td>
-        <td>${escapeHtml(s.organizer)}</td>
-      </tr>
-    `).join("");
+    const items = data.items || [];
+
+    listDiv.innerHTML = "";
+    if(items.length === 0){
+      listDiv.innerHTML = "<p>لسه مفيش تسجيلات.</p>";
+      return;
+    }
+
+    items.forEach(x => {
+      const div = document.createElement("div");
+      div.className = "card";
+      div.innerHTML = `
+        <b>${x.teamName}</b>
+        <div>القائد: ${x.leaderName} — ID: ${x.leaderId}</div>
+        <div style="opacity:.75;font-size:12px">${new Date(x.createdAt).toLocaleString()}</div>
+        ${x.players && x.players.length ? `<div>اللاعبين: ${x.players.join(" / ")}</div>` : ""}
+      `;
+      listDiv.appendChild(div);
+    });
   }
 
-  function escapeHtml(x){
-    return String(x ?? "")
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
-  }
-
-  form.addEventListener("submit", async (e) => {
+  document.getElementById("form").addEventListener("submit", async (e) => {
     e.preventDefault();
-    msg.textContent = "جارٍ التسجيل...";
 
-    const fd = new FormData(form);
-    const body = Object.fromEntries(fd.entries());
+    const teamName = document.getElementById("teamName").value;
+    const leaderName = document.getElementById("leaderName").value;
+    const leaderId = document.getElementById("leaderId").value;
+    const playersText = document.getElementById("players").value;
+
+    const players = playersText
+      .split("\n")
+      .map(x => x.trim())
+      .filter(Boolean);
 
     const res = await fetch("/api/scrims", {
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify(body)
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ teamName, leaderName, leaderId, players })
     });
 
     if(!res.ok){
       const err = await res.json().catch(()=>({}));
-      msg.textContent = err.error || "حصل خطأ";
+      alert(err.error || "حصل خطأ");
       return;
     }
 
-    form.reset();
-    msg.textContent = "✅ تم التسجيل";
-    await loadScrims();
+    document.getElementById("form").reset();
+    loadScrims();
   });
 
   loadScrims();
-  setInterval(loadScrims, 15000); // تحديث تلقائي كل 15 ثانية
 </script>
+
 </body>
 </html>
