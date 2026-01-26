@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin Login</title>
+  <style>
+    body{font-family:system-ui,Arial; max-width:520px; margin:40px auto; padding:0 12px}
+    .card{border:1px solid #ddd; border-radius:12px; padding:14px}
+    input,button{width:100%; padding:10px; margin-top:10px}
+  </style>
+</head>
+<body>
+  <h1>دخول الأدمن</h1>
+  <div class="card">
+    <form id="f">
+      <label>Username</label>
+      <input name="username" required />
+      <label>Password</label>
+      <input name="password" type="password" required />
+      <button type="submit">Login</button>
+      <p id="m"></p>
+    </form>
+  </div>
+
+<script>
+  const f = document.getElementById("f");
+  const m = document.getElementById("m");
+
+  f.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    m.textContent = "جارٍ الدخول...";
+
+    const fd = new FormData(f);
+    const body = Object.fromEntries(fd.entries());
+
+    const res = await fetch("/api/admin/login", {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify(body)
+    });
+
+    if(!res.ok){
+      const err = await res.json().catch(()=>({}));
+      m.textContent = err.error || "فشل الدخول";
+      return;
+    }
+
+    location.href = "/admin.html";
+  });
+</script>
+</body>
+</html>
