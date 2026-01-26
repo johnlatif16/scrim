@@ -288,9 +288,7 @@
     const res = await api("/api/admin/scrims/" + id, { method: "DELETE" });
     if(!res) return;
 
-    // لو كان مفتوح modal لنفس العنصر
     if(currentEditing && currentEditing.id === id) closeModal();
-
     load();
   }
 
@@ -341,17 +339,14 @@
     if(currentEditing) deleteScrim(currentEditing.id);
   });
 
-  // close modal by clicking backdrop
   modalBackdrop.addEventListener("click", (e) => {
     if(e.target === modalBackdrop) closeModal();
   });
 
-  // Esc closes modal
   document.addEventListener("keydown", (e) => {
     if(e.key === "Escape") closeModal();
   });
 
-  // حماية الصفحة نفسها
   if(!getToken()) location.href = "/login";
   load();
 </script>
