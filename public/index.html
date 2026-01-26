@@ -5,62 +5,200 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Scrim Register</title>
   <style>
-    body{font-family:system-ui;max-width:800px;margin:40px auto;padding:16px}
-    input,textarea,button{width:100%;padding:10px;margin:6px 0;border-radius:10px;border:1px solid #ccc}
-    button{border-color:#111;cursor:pointer}
-    .card{border:1px solid #eee;border-radius:14px;padding:14px;margin-top:10px}
-    .top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
-    a{color:blue;text-decoration:none}
+    :root{
+      --bg:#0b1020;
+      --card:#0f1733;
+      --card2:#111b3d;
+      --text:#e9ecff;
+      --muted:#aab1d6;
+      --line:rgba(255,255,255,.08);
+      --brand:#6c7cff;
+      --brand2:#22d3ee;
+      --danger:#ff4d6d;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:system-ui;
+      background:
+        radial-gradient(1000px 600px at 20% 10%, rgba(108,124,255,.25), transparent 60%),
+        radial-gradient(900px 500px at 90% 20%, rgba(34,211,238,.18), transparent 60%),
+        var(--bg);
+      color:var(--text);
+    }
+    .wrap{max-width:980px;margin:32px auto;padding:16px}
+    .hero{
+      display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+      padding:18px 18px;border:1px solid var(--line);border-radius:18px;
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      box-shadow:0 10px 30px rgba(0,0,0,.25);
+    }
+    .hero h1{margin:0;font-size:26px}
+    .hero p{margin:6px 0 0;color:var(--muted)}
+    .btn{
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(108,124,255,.35), rgba(108,124,255,.12));
+      color:var(--text);
+      padding:10px 14px;border-radius:14px;text-decoration:none;display:inline-flex;gap:8px;align-items:center;
+    }
+    .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:14px;margin-top:14px}
+    @media (max-width: 860px){.grid{grid-template-columns:1fr}}
+    .card{
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border-radius:18px;padding:16px;
+      box-shadow:0 10px 30px rgba(0,0,0,.20);
+    }
+    label{display:block;color:var(--muted);font-size:13px;margin:10px 0 6px}
+    input, textarea, select{
+      width:100%;
+      padding:12px 12px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:rgba(10,15,35,.55);
+      color:var(--text);
+      outline:none;
+    }
+    textarea{resize:vertical}
+    .primary{
+      width:100%;
+      margin-top:12px;
+      padding:12px 14px;
+      border-radius:14px;
+      border:1px solid rgba(108,124,255,.55);
+      background:linear-gradient(90deg, rgba(108,124,255,.55), rgba(34,211,238,.30));
+      color:var(--text);
+      font-weight:700;
+      cursor:pointer;
+    }
+    .sectionTitle{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+    .sectionTitle h2{margin:0;font-size:18px}
+    .pill{
+      font-size:12px;color:var(--muted);
+      border:1px solid var(--line);
+      padding:6px 10px;border-radius:999px;
+      background:rgba(255,255,255,.03);
+    }
+    .list{display:grid;gap:10px;margin-top:12px}
+    .item{
+      border:1px solid var(--line);
+      border-radius:16px;padding:14px;
+      background:linear-gradient(180deg, rgba(17,27,61,.85), rgba(15,23,51,.65));
+    }
+    .toprow{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+    .team{font-weight:800;font-size:16px}
+    .meta{color:var(--muted);font-size:12px}
+    .row{margin-top:6px;color:rgba(233,236,255,.92)}
+    .tag{
+      display:inline-block;margin-top:8px;
+      font-size:12px;
+      padding:6px 10px;border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(108,124,255,.14);
+      color:var(--text);
+    }
+    .empty{color:var(--muted);padding:8px 2px}
+    .hint{color:var(--muted);font-size:13px;margin-top:10px}
   </style>
 </head>
 <body>
+  <div class="wrap">
+    <div class="hero">
+      <div>
+        <h1>تسجيل الاسكريم</h1>
+        <p>ابعت اللينك للتيم — كل فريق يسجل مرة واحدة.</p>
+      </div>
+      <a class="btn" href="/login">دخول الأدمن</a>
+    </div>
 
-  <div class="top">
-    <h2>تسجيل الاسكريم</h2>
-    <a href="/login">دخول الأدمن</a>
+    <div class="grid">
+      <div class="card">
+        <form id="form">
+          <label>الاسم</label>
+          <input id="name" placeholder="اسمك" required />
+
+          <label>المركز في الاسكريم</label>
+          <select id="role" required>
+            <option value="" selected disabled>اختار المركز</option>
+            <option>Fragger</option>
+            <option>Flanker</option>
+            <option>Viper</option>
+            <option>Support</option>
+          </select>
+
+          <label>اسم التيم</label>
+          <input id="teamName" placeholder="اسم التيم" required />
+
+          <label>اسم قائد التيم</label>
+          <input id="leaderName" placeholder="اسم القائد" required />
+
+          <label>PUBG ID للقائد</label>
+          <input id="leaderId" placeholder="ID" required />
+
+          <label>اللاعبين (اختياري)</label>
+          <textarea id="players" rows="4" placeholder="كل لاعب في سطر&#10;Player1&#10;Player2"></textarea>
+
+          <button class="primary" type="submit">تسجيل</button>
+          <div class="hint">بعد التسجيل هتظهر بياناتك في الليستة تلقائي.</div>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="sectionTitle">
+          <h2>الليستة</h2>
+          <span class="pill" id="count">0 فريق</span>
+        </div>
+        <div class="list" id="list"></div>
+      </div>
+    </div>
   </div>
-
-  <form id="form">
-    <input id="teamName" placeholder="اسم التيم" required />
-    <input id="leaderName" placeholder="اسم القائد" required />
-    <input id="leaderId" placeholder="PUBG ID للقائد" required />
-    <textarea id="players" rows="4" placeholder="اللاعبين (اختياري) كل لاعب في سطر"></textarea>
-    <button type="submit">تسجيل</button>
-  </form>
-
-  <h3>الليستة</h3>
-  <div id="list"></div>
 
 <script>
   const listDiv = document.getElementById("list");
+  const countPill = document.getElementById("count");
 
   async function loadScrims() {
     const res = await fetch("/api/scrims");
     const data = await res.json();
     const items = data.items || [];
 
+    countPill.textContent = `${items.length} فريق`;
+
     listDiv.innerHTML = "";
     if(items.length === 0){
-      listDiv.innerHTML = "<p>لسه مفيش تسجيلات.</p>";
+      listDiv.innerHTML = `<div class="empty">لسه مفيش تسجيلات.</div>`;
       return;
     }
 
     items.forEach(x => {
       const div = document.createElement("div");
-      div.className = "card";
+      div.className = "item";
       div.innerHTML = `
-        <b>${x.teamName}</b>
-        <div>القائد: ${x.leaderName} — ID: ${x.leaderId}</div>
-        <div style="opacity:.75;font-size:12px">${new Date(x.createdAt).toLocaleString()}</div>
-        ${x.players && x.players.length ? `<div>اللاعبين: ${x.players.join(" / ")}</div>` : ""}
+        <div class="toprow">
+          <div class="team">${escapeHtml(x.teamName)}</div>
+          <div class="meta">${new Date(x.createdAt).toLocaleString()}</div>
+        </div>
+        <div class="row">الاسم: <b>${escapeHtml(x.name)}</b></div>
+        <div class="row">المركز: <b>${escapeHtml(x.role)}</b></div>
+        <div class="row">القائد: ${escapeHtml(x.leaderName)} — ID: ${escapeHtml(x.leaderId)}</div>
+        ${x.players && x.players.length ? `<div class="row">اللاعبين: ${x.players.map(escapeHtml).join(" / ")}</div>` : ""}
+        <div class="tag">SCRIM</div>
       `;
       listDiv.appendChild(div);
     });
   }
 
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, (m) => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    }[m]));
+  }
+
   document.getElementById("form").addEventListener("submit", async (e) => {
     e.preventDefault();
 
+    const name = document.getElementById("name").value;
+    const role = document.getElementById("role").value;
     const teamName = document.getElementById("teamName").value;
     const leaderName = document.getElementById("leaderName").value;
     const leaderId = document.getElementById("leaderId").value;
@@ -74,7 +212,7 @@
     const res = await fetch("/api/scrims", {
       method: "POST",
       headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({ teamName, leaderName, leaderId, players })
+      body: JSON.stringify({ name, role, teamName, leaderName, leaderId, players })
     });
 
     if(!res.ok){
