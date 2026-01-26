@@ -5,72 +5,141 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Admin Dashboard</title>
   <style>
-    body{font-family:system-ui;max-width:900px;margin:40px auto;padding:16px}
-    button{padding:10px 14px;border-radius:10px;border:1px solid #111;cursor:pointer}
-    .card{border:1px solid #eee;border-radius:14px;padding:14px;margin-top:10px}
-    .top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
-    .danger{border-color:#b00020}
+    :root{
+      --bg:#0b1020;
+      --card:#0f1733;
+      --text:#e9ecff;
+      --muted:#aab1d6;
+      --line:rgba(255,255,255,.08);
+      --brand:#6c7cff;
+      --brand2:#22d3ee;
+      --danger:#ff4d6d;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;font-family:system-ui;color:var(--text);
+      background:
+        radial-gradient(1000px 600px at 20% 10%, rgba(108,124,255,.25), transparent 60%),
+        radial-gradient(900px 500px at 90% 20%, rgba(34,211,238,.18), transparent 60%),
+        var(--bg);
+    }
+    .wrap{max-width:980px;margin:32px auto;padding:16px}
+    .bar{
+      display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+      padding:18px;border-radius:18px;border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      box-shadow:0 10px 30px rgba(0,0,0,.25);
+    }
+    h1{margin:0;font-size:22px}
+    .btn{
+      padding:10px 14px;border-radius:14px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      color:var(--text);cursor:pointer;
+    }
+    .btnPrimary{
+      border:1px solid rgba(108,124,255,.55);
+      background:linear-gradient(90deg, rgba(108,124,255,.55), rgba(34,211,238,.30));
+      font-weight:700;
+    }
+    .btnDanger{
+      border:1px solid rgba(255,77,109,.6);
+      background:rgba(255,77,109,.12);
+    }
+    .list{display:grid;gap:10px;margin-top:14px}
+    .item{
+      border:1px solid var(--line);
+      border-radius:16px;padding:14px;
+      background:linear-gradient(180deg, rgba(17,27,61,.85), rgba(15,23,51,.65));
+      box-shadow:0 8px 22px rgba(0,0,0,.18);
+    }
+    .toprow{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+    .team{font-weight:900}
+    .meta{color:var(--muted);font-size:12px}
+    .row{margin-top:6px;color:rgba(233,236,255,.92)}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .empty{color:var(--muted);padding:8px 2px}
+    input,select{
+      width:100%;
+      padding:10px;border-radius:12px;border:1px solid var(--line);
+      background:rgba(10,15,35,.55);
+      color:var(--text);
+      outline:none;
+    }
   </style>
 </head>
 <body>
-
-  <div class="top">
-    <h2>Dashboard</h2>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button onclick="logout()" class="danger">Logout</button>
-      <button onclick="location.href='/'">صفحة التسجيل</button>
+  <div class="wrap">
+    <div class="bar">
+      <div>
+        <h1>Dashboard</h1>
+        <div style="color:var(--muted);font-size:13px;margin-top:6px">تعديل / حذف التسجيلات</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn" onclick="location.href='/'">صفحة التسجيل</button>
+        <button class="btn btnPrimary" onclick="load()">تحديث</button>
+        <button class="btn btnDanger" onclick="logout()">Logout</button>
+      </div>
     </div>
-  </div>
 
-  <div id="list"></div>
+    <div class="list" id="list"></div>
+  </div>
 
 <script>
   const listDiv = document.getElementById("list");
 
-  function getToken(){
-    return localStorage.getItem("admin_token");
-  }
-
+  function getToken(){ return localStorage.getItem("admin_token"); }
   function logout(){
     localStorage.removeItem("admin_token");
     location.href = "/login";
   }
 
-  async function load() {
+  async function api(path, options = {}){
     const token = getToken();
-    if(!token){
-      location.href = "/login";
-      return;
-    }
+    if(!token){ logout(); return null; }
 
-    const res = await fetch("/api/admin/scrims", {
-      headers: { "Authorization": "Bearer " + token }
+    const res = await fetch(path, {
+      ...options,
+      headers: {
+        ...(options.headers || {}),
+        "Authorization": "Bearer " + token
+      }
     });
 
-    if(res.status === 401){
-      logout();
-      return;
-    }
+    if(res.status === 401){ logout(); return null; }
+    return res;
+  }
+
+  async function load() {
+    const res = await api("/api/admin/scrims");
+    if(!res) return;
 
     const data = await res.json();
     const items = data.items || [];
 
     listDiv.innerHTML = "";
     if(items.length === 0){
-      listDiv.innerHTML = "<p>مفيش تسجيلات.</p>";
+      listDiv.innerHTML = `<div class="empty">مفيش تسجيلات.</div>`;
       return;
     }
 
     items.forEach(x => {
       const div = document.createElement("div");
-      div.className = "card";
+      div.className = "item";
       div.innerHTML = `
-        <b>${x.teamName}</b>
-        <div>القائد: ${x.leaderName} — ID: ${x.leaderId}</div>
-        <div style="opacity:.75;font-size:12px">${new Date(x.createdAt).toLocaleString()}</div>
-        ${x.players && x.players.length ? `<div>اللاعبين: ${x.players.join(" / ")}</div>` : ""}
-        <div style="margin-top:10px">
-          <button class="danger" onclick="deleteScrim('${x.id}')">حذف</button>
+        <div class="toprow">
+          <div class="team">${escapeHtml(x.teamName)}</div>
+          <div class="meta">${new Date(x.createdAt).toLocaleString()}</div>
+        </div>
+
+        <div class="row">الاسم: <b>${escapeHtml(x.name)}</b></div>
+        <div class="row">المركز: <b>${escapeHtml(x.role)}</b></div>
+        <div class="row">القائد: ${escapeHtml(x.leaderName)} — ID: ${escapeHtml(x.leaderId)}</div>
+        ${x.players && x.players.length ? `<div class="row">اللاعبين: ${x.players.map(escapeHtml).join(" / ")}</div>` : ""}
+
+        <div class="actions">
+          <button class="btn btnPrimary" onclick="editScrim('${x.id}', ${encodeURIComponent(JSON.stringify(x))})">تعديل</button>
+          <button class="btn btnDanger" onclick="deleteScrim('${x.id}')">حذف</button>
         </div>
       `;
       listDiv.appendChild(div);
@@ -78,20 +147,54 @@
   }
 
   async function deleteScrim(id){
-    const token = getToken();
-    const res = await fetch("/api/admin/scrims/" + id, {
-      method: "DELETE",
-      headers: { "Authorization": "Bearer " + token }
-    });
-
-    if(res.status === 401){
-      logout();
-      return;
-    }
-
+    if(!confirm("متأكد إنك عاوز تحذف التسجيل ده؟")) return;
+    const res = await api("/api/admin/scrims/" + id, { method: "DELETE" });
+    if(!res) return;
     load();
   }
 
+  async function editScrim(id, encodedJson){
+    const current = JSON.parse(decodeURIComponent(encodedJson));
+
+    // تعديل سريع بـ prompts (بسيط وواضح)
+    const name = prompt("الاسم:", current.name);
+    if(name === null) return;
+
+    const teamName = prompt("اسم التيم:", current.teamName);
+    if(teamName === null) return;
+
+    const leaderName = prompt("اسم القائد:", current.leaderName);
+    if(leaderName === null) return;
+
+    const leaderId = prompt("PUBG ID للقائد:", current.leaderId);
+    if(leaderId === null) return;
+
+    const role = prompt("المركز (Fragger / Flanker / Viper / Support):", current.role);
+    if(role === null) return;
+
+    const res = await api("/api/admin/scrims/" + id, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, teamName, leaderName, leaderId, role })
+    });
+    if(!res) return;
+
+    const out = await res.json().catch(()=>({}));
+    if(!res.ok){
+      alert(out.error || "فشل التعديل");
+      return;
+    }
+    load();
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, (m) => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    }[m]));
+  }
+
+  // حماية الصفحة نفسها: لو مفيش توكن يرجع للّوجين
+  if(!getToken()) location.href = "/login";
   load();
 </script>
 
