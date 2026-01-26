@@ -7,7 +7,6 @@
   <style>
     :root{
       --bg:#0b1020;
-      --card:#0f1733;
       --text:#e9ecff;
       --muted:#aab1d6;
       --line:rgba(255,255,255,.08);
@@ -22,6 +21,7 @@
         radial-gradient(1000px 600px at 20% 10%, rgba(108,124,255,.25), transparent 60%),
         radial-gradient(900px 500px at 90% 20%, rgba(34,211,238,.18), transparent 60%),
         var(--bg);
+      min-height:100vh;
     }
     .wrap{max-width:980px;margin:32px auto;padding:16px}
     .bar{
@@ -31,21 +31,35 @@
       box-shadow:0 10px 30px rgba(0,0,0,.25);
     }
     h1{margin:0;font-size:22px}
+    .sub{color:var(--muted);font-size:13px;margin-top:6px}
     .btn{
       padding:10px 14px;border-radius:14px;
       border:1px solid var(--line);
       background:rgba(255,255,255,.03);
       color:var(--text);cursor:pointer;
+      transition:transform .12s ease, border-color .12s ease, filter .12s ease;
     }
+    .btn:hover{transform:translateY(-1px);border-color:rgba(108,124,255,.45)}
     .btnPrimary{
       border:1px solid rgba(108,124,255,.55);
       background:linear-gradient(90deg, rgba(108,124,255,.55), rgba(34,211,238,.30));
-      font-weight:700;
+      font-weight:800;
     }
     .btnDanger{
       border:1px solid rgba(255,77,109,.6);
       background:rgba(255,77,109,.12);
     }
+
+    .stats{
+      display:flex;gap:10px;flex-wrap:wrap;margin-top:14px
+    }
+    .pill{
+      font-size:12px;color:var(--muted);
+      border:1px solid var(--line);
+      padding:8px 12px;border-radius:999px;
+      background:rgba(255,255,255,.03);
+    }
+
     .list{display:grid;gap:10px;margin-top:14px}
     .item{
       border:1px solid var(--line);
@@ -54,18 +68,62 @@
       box-shadow:0 8px 22px rgba(0,0,0,.18);
     }
     .toprow{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
-    .team{font-weight:900}
+    .name{font-weight:900;font-size:16px}
     .meta{color:var(--muted);font-size:12px}
-    .row{margin-top:6px;color:rgba(233,236,255,.92)}
-    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .row{margin-top:8px;color:rgba(233,236,255,.92)}
+    .tag{
+      display:inline-block;margin-top:10px;
+      font-size:12px;
+      padding:6px 10px;border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(108,124,255,.14);
+    }
+    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
     .empty{color:var(--muted);padding:8px 2px}
+
+    /* Modal */
+    .modalBackdrop{
+      position:fixed;inset:0;
+      background:rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+    }
+    .modal{
+      width:100%;
+      max-width:520px;
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:16px;
+      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      box-shadow:0 20px 60px rgba(0,0,0,.40);
+      backdrop-filter: blur(6px);
+    }
+    .modalHead{
+      display:flex;justify-content:space-between;align-items:center;gap:10px;
+      margin-bottom:10px
+    }
+    .modalHead h2{margin:0;font-size:18px}
+    .xbtn{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      color:var(--text);
+      border-radius:12px;
+      padding:8px 10px;
+      cursor:pointer;
+    }
+    label{display:block;color:var(--muted);font-size:13px;margin:10px 0 6px}
     input,select{
       width:100%;
-      padding:10px;border-radius:12px;border:1px solid var(--line);
+      padding:12px;border-radius:14px;border:1px solid var(--line);
       background:rgba(10,15,35,.55);
       color:var(--text);
       outline:none;
     }
+    input:focus,select:focus{border-color:rgba(108,124,255,.55)}
+    .modalActions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+    .grow{flex:1}
   </style>
 </head>
 <body>
@@ -73,22 +131,73 @@
     <div class="bar">
       <div>
         <h1>Dashboard</h1>
-        <div style="color:var(--muted);font-size:13px;margin-top:6px">تعديل / حذف التسجيلات</div>
+        <div class="sub">تعديل / حذف تسجيلات اللاعبين</div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn" onclick="location.href='/'">صفحة التسجيل</button>
-        <button class="btn btnPrimary" onclick="load()">تحديث</button>
-        <button class="btn btnDanger" onclick="logout()">Logout</button>
+        <button class="btn btnPrimary" id="refreshBtn">تحديث</button>
+        <button class="btn btnDanger" id="logoutBtn">Logout</button>
       </div>
+    </div>
+
+    <div class="stats">
+      <div class="pill" id="countPill">0 لاعب</div>
+      <div class="pill">JWT Protected</div>
     </div>
 
     <div class="list" id="list"></div>
   </div>
 
+  <!-- Edit Modal -->
+  <div class="modalBackdrop" id="modalBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modalHead">
+        <h2 id="modalTitle">تعديل اللاعب</h2>
+        <button class="xbtn" id="closeModalBtn">✕</button>
+      </div>
+
+      <label>اسم اللاعب</label>
+      <input id="editName" placeholder="اسم اللاعب" />
+
+      <label>مركز اللاعب</label>
+      <select id="editRole">
+        <option>Fragger</option>
+        <option>Flanker</option>
+        <option>Viper</option>
+        <option>Support</option>
+      </select>
+
+      <div class="modalActions">
+        <button class="btn btnDanger" id="deleteFromModalBtn">حذف</button>
+        <div class="grow"></div>
+        <button class="btn" id="cancelBtn">إلغاء</button>
+        <button class="btn btnPrimary" id="saveBtn">حفظ</button>
+      </div>
+
+      <div class="sub" id="modalMsg" style="margin-top:10px"></div>
+    </div>
+  </div>
+
 <script>
   const listDiv = document.getElementById("list");
+  const countPill = document.getElementById("countPill");
+
+  const refreshBtn = document.getElementById("refreshBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
+
+  // Modal elements
+  const modalBackdrop = document.getElementById("modalBackdrop");
+  const closeModalBtn = document.getElementById("closeModalBtn");
+  const cancelBtn = document.getElementById("cancelBtn");
+  const saveBtn = document.getElementById("saveBtn");
+  const deleteFromModalBtn = document.getElementById("deleteFromModalBtn");
+  const editName = document.getElementById("editName");
+  const editRole = document.getElementById("editRole");
+  const modalMsg = document.getElementById("modalMsg");
+
+  let currentEditing = null; // {id, name, role, createdAt}
 
   function getToken(){ return localStorage.getItem("admin_token"); }
+
   function logout(){
     localStorage.removeItem("admin_token");
     location.href = "/login";
@@ -110,12 +219,37 @@
     return res;
   }
 
-  async function load() {
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, (m) => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    }[m]));
+  }
+
+  function openModal(item){
+    currentEditing = item;
+    modalMsg.textContent = "";
+    editName.value = item.name || "";
+    editRole.value = item.role || "Fragger";
+
+    modalBackdrop.style.display = "flex";
+    modalBackdrop.setAttribute("aria-hidden", "false");
+    setTimeout(() => editName.focus(), 0);
+  }
+
+  function closeModal(){
+    modalBackdrop.style.display = "none";
+    modalBackdrop.setAttribute("aria-hidden", "true");
+    currentEditing = null;
+  }
+
+  async function load(){
     const res = await api("/api/admin/scrims");
     if(!res) return;
 
-    const data = await res.json();
+    const data = await res.json().catch(()=>({}));
     const items = data.items || [];
+
+    countPill.textContent = `${items.length} لاعب`;
 
     listDiv.innerHTML = "";
     if(items.length === 0){
@@ -123,25 +257,29 @@
       return;
     }
 
-    items.forEach(x => {
+    items.forEach(item => {
       const div = document.createElement("div");
       div.className = "item";
       div.innerHTML = `
         <div class="toprow">
-          <div class="team">${escapeHtml(x.teamName)}</div>
-          <div class="meta">${new Date(x.createdAt).toLocaleString()}</div>
+          <div class="name">${escapeHtml(item.name)}</div>
+          <div class="meta">${new Date(item.createdAt).toLocaleString()}</div>
         </div>
 
-        <div class="row">الاسم: <b>${escapeHtml(x.name)}</b></div>
-        <div class="row">المركز: <b>${escapeHtml(x.role)}</b></div>
-        <div class="row">القائد: ${escapeHtml(x.leaderName)} — ID: ${escapeHtml(x.leaderId)}</div>
-        ${x.players && x.players.length ? `<div class="row">اللاعبين: ${x.players.map(escapeHtml).join(" / ")}</div>` : ""}
+        <div class="row">
+          <span class="tag">المركز: <b>${escapeHtml(item.role)}</b></span>
+        </div>
 
         <div class="actions">
-          <button class="btn btnPrimary" onclick="editScrim('${x.id}', ${encodeURIComponent(JSON.stringify(x))})">تعديل</button>
-          <button class="btn btnDanger" onclick="deleteScrim('${x.id}')">حذف</button>
+          <button class="btn btnPrimary">تعديل</button>
+          <button class="btn btnDanger">حذف</button>
         </div>
       `;
+
+      const [editBtn, delBtn] = div.querySelectorAll("button");
+      editBtn.addEventListener("click", () => openModal(item));
+      delBtn.addEventListener("click", () => deleteScrim(item.id));
+
       listDiv.appendChild(div);
     });
   }
@@ -150,50 +288,71 @@
     if(!confirm("متأكد إنك عاوز تحذف التسجيل ده؟")) return;
     const res = await api("/api/admin/scrims/" + id, { method: "DELETE" });
     if(!res) return;
+
+    // لو كان مفتوح modal لنفس العنصر
+    if(currentEditing && currentEditing.id === id) closeModal();
+
     load();
   }
 
-  async function editScrim(id, encodedJson){
-    const current = JSON.parse(decodeURIComponent(encodedJson));
+  async function saveEdit(){
+    if(!currentEditing) return;
 
-    // تعديل سريع بـ prompts (بسيط وواضح)
-    const name = prompt("الاسم:", current.name);
-    if(name === null) return;
+    const name = editName.value.trim();
+    const role = editRole.value;
 
-    const teamName = prompt("اسم التيم:", current.teamName);
-    if(teamName === null) return;
-
-    const leaderName = prompt("اسم القائد:", current.leaderName);
-    if(leaderName === null) return;
-
-    const leaderId = prompt("PUBG ID للقائد:", current.leaderId);
-    if(leaderId === null) return;
-
-    const role = prompt("المركز (Fragger / Flanker / Viper / Support):", current.role);
-    if(role === null) return;
-
-    const res = await api("/api/admin/scrims/" + id, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, teamName, leaderName, leaderId, role })
-    });
-    if(!res) return;
-
-    const out = await res.json().catch(()=>({}));
-    if(!res.ok){
-      alert(out.error || "فشل التعديل");
+    if(!name){
+      modalMsg.textContent = "اكتب اسم اللاعب.";
       return;
     }
+
+    saveBtn.disabled = true;
+    modalMsg.textContent = "جارٍ الحفظ...";
+
+    const res = await api("/api/admin/scrims/" + currentEditing.id, {
+      method: "PUT",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ name, role })
+    });
+
+    saveBtn.disabled = false;
+
+    if(!res) return;
+    const out = await res.json().catch(()=>({}));
+
+    if(!res.ok){
+      modalMsg.textContent = out.error || "فشل الحفظ.";
+      return;
+    }
+
+    modalMsg.textContent = "تم الحفظ ✅";
+    closeModal();
     load();
   }
 
-  function escapeHtml(s){
-    return String(s).replace(/[&<>"']/g, (m) => ({
-      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
-    }[m]));
-  }
+  // Events
+  refreshBtn.addEventListener("click", load);
+  logoutBtn.addEventListener("click", logout);
 
-  // حماية الصفحة نفسها: لو مفيش توكن يرجع للّوجين
+  closeModalBtn.addEventListener("click", closeModal);
+  cancelBtn.addEventListener("click", closeModal);
+
+  saveBtn.addEventListener("click", saveEdit);
+  deleteFromModalBtn.addEventListener("click", () => {
+    if(currentEditing) deleteScrim(currentEditing.id);
+  });
+
+  // close modal by clicking backdrop
+  modalBackdrop.addEventListener("click", (e) => {
+    if(e.target === modalBackdrop) closeModal();
+  });
+
+  // Esc closes modal
+  document.addEventListener("keydown", (e) => {
+    if(e.key === "Escape") closeModal();
+  });
+
+  // حماية الصفحة نفسها
   if(!getToken()) location.href = "/login";
   load();
 </script>
