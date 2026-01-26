@@ -5,55 +5,169 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Admin Login</title>
   <style>
-    body{font-family:system-ui;max-width:520px;margin:50px auto;padding:16px}
-    input,button{width:100%;padding:10px;margin:6px 0;border-radius:10px;border:1px solid #ccc}
-    button{border-color:#111;cursor:pointer}
-    .card{border:1px solid #eee;border-radius:14px;padding:14px}
-    .err{color:#b00020;margin-top:8px}
-    a{color:blue;text-decoration:none}
+    :root{
+      --bg:#0b1020;
+      --text:#e9ecff;
+      --muted:#aab1d6;
+      --line:rgba(255,255,255,.08);
+      --brand:#6c7cff;
+      --brand2:#22d3ee;
+      --danger:#ff4d6d;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:system-ui;
+      color:var(--text);
+      background:
+        radial-gradient(1000px 600px at 20% 10%, rgba(108,124,255,.25), transparent 60%),
+        radial-gradient(900px 500px at 90% 20%, rgba(34,211,238,.18), transparent 60%),
+        var(--bg);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+    .wrap{width:100%;max-width:520px}
+    .hero{
+      display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;
+      padding:16px;border:1px solid var(--line);border-radius:18px;
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      box-shadow:0 10px 30px rgba(0,0,0,.25);
+      margin-bottom:14px;
+    }
+    .hero h1{margin:0;font-size:20px}
+    .hero p{margin:6px 0 0;color:var(--muted);font-size:13px}
+    .back{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:14px;
+      text-decoration:none;
+      display:inline-flex;align-items:center;gap:8px;
+      transition:transform .12s ease, border-color .12s ease;
+    }
+    .back:hover{transform:translateY(-1px);border-color:rgba(108,124,255,.55)}
+    .card{
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:16px;
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      box-shadow:0 10px 30px rgba(0,0,0,.20);
+    }
+    label{display:block;color:var(--muted);font-size:13px;margin:10px 0 6px}
+    input{
+      width:100%;
+      padding:12px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:rgba(10,15,35,.55);
+      color:var(--text);
+      outline:none;
+    }
+    input:focus{border-color:rgba(108,124,255,.55)}
+    .btn{
+      width:100%;
+      margin-top:12px;
+      padding:12px 14px;
+      border-radius:14px;
+      border:1px solid rgba(108,124,255,.55);
+      background:linear-gradient(90deg, rgba(108,124,255,.55), rgba(34,211,238,.30));
+      color:var(--text);
+      font-weight:800;
+      cursor:pointer;
+      transition:transform .12s ease, filter .12s ease;
+    }
+    .btn:hover{transform:translateY(-1px);filter:brightness(1.05)}
+    .err{
+      margin-top:10px;
+      color:var(--danger);
+      font-size:13px;
+      min-height:18px;
+    }
+    .hint{
+      margin-top:10px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.6;
+    }
+    .row{display:grid;gap:10px}
+    @media (prefers-reduced-motion: reduce){
+      .btn,.back{transition:none}
+    }
   </style>
 </head>
 <body>
+  <div class="wrap">
+    <div class="hero">
+      <div>
+        <h1>دخول الأدمن</h1>
+        <p>tripESPORTS</p>
+      </div>
+    </div>
 
-  <h2>دخول الأدمن</h2>
-  <div class="card">
-    <input id="username" placeholder="Username" />
-    <input id="password" placeholder="Password" type="password" />
-    <button id="btn">Login</button>
-    <div id="msg" class="err"></div>
+    <div class="card">
+      <div class="row">
+        <div>
+          <label>Username</label>
+          <input id="username" placeholder="admin" autocomplete="username" />
+        </div>
+
+        <div>
+          <label>Password</label>
+          <input id="password" placeholder="••••••••" type="password" autocomplete="current-password" />
+        </div>
+
+        <button id="btn" class="btn">Login</button>
+        <div id="msg" class="err"></div>
+
+
+      </div>
+    </div>
   </div>
-
-  <p style="margin-top:12px;">
-    <a href="/">رجوع للتسجيل</a>
-  </p>
 
 <script>
   const msg = document.getElementById("msg");
+  const btn = document.getElementById("btn");
 
-  document.getElementById("btn").addEventListener("click", async () => {
+  async function doLogin(){
     msg.textContent = "";
+    btn.disabled = true;
+    btn.textContent = "جارٍ تسجيل الدخول...";
 
     const username = document.getElementById("username").value;
     const password = document.getElementById("password").value;
 
-    const res = await fetch("/api/admin/login", {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({ username, password })
-    });
+    try{
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ username, password })
+      });
 
-    if(!res.ok){
-      const err = await res.json().catch(()=>({}));
-      msg.textContent = err.error || "Login failed";
-      return;
+      if(!res.ok){
+        const err = await res.json().catch(()=>({}));
+        msg.textContent = err.error || "Login failed";
+        return;
+      }
+
+      const data = await res.json();
+      localStorage.setItem("admin_token", data.token);
+      location.href = "/dashboard";
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Login";
     }
+  }
 
-    const data = await res.json();
-    localStorage.setItem("admin_token", data.token);
+  btn.addEventListener("click", doLogin);
 
-    location.href = "/dashboard";
+  // Enter = Login
+  document.addEventListener("keydown", (e) => {
+    if(e.key === "Enter") doLogin();
   });
 </script>
-
 </body>
 </html>
