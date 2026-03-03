@@ -45,7 +45,7 @@ const db = getFirestore();
 const scrimsCol = db.collection("scrims");
 
 // -------------------- Helpers --------------------
-const allowedRoles = ["IGL", "Fragger", "Supporter", "Scouter"];
+const allowedRoles = ["IGL", "Fragger", "Supporter", "Scouter", "Flanker"];
 
 function cleanString(v) {
   return String(v ?? "").trim();
